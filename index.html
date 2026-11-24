@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Мои игры</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--ff,system-ui,sans-serif);color:var(--tx);background:linear-gradient(160deg,var(--bg1),var(--bg2)) fixed;min-height:100vh}
+header{text-align:center;padding:38px 16px 8px}
+#logo{font-size:60px;filter:drop-shadow(0 6px 8px #0003)}
+h1{margin:6px 0 4px;font-size:clamp(26px,6vw,42px)}
+#sub{opacity:.8;margin:0 auto 16px;max-width:540px;padding:0 8px}
+#q{width:min(420px,90%);padding:12px 18px;border-radius:999px;border:2px solid #0002;background:var(--cd);color:var(--tx);font-size:16px;box-shadow:0 4px 0 #0002}
+#tags{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:14px 8px}
+.chip{border:0;border-radius:999px;padding:7px 14px;font-weight:700;background:var(--cd);color:var(--tx);box-shadow:0 3px 0 #0002;cursor:pointer}
+.chip.on{background:var(--ac);color:#fff}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px;max-width:1000px;margin:10px auto 30px;padding:0 16px}
+.card{background:var(--cd);border-radius:var(--r);padding:16px;box-shadow:0 8px 24px #0002,inset 0 1px 0 #fff6;display:flex;flex-direction:column;gap:10px;transition:transform .2s}
+.card:hover{transform:translateY(-4px)}
+.top{display:flex;gap:12px;align-items:center}
+.ic{flex:none;width:74px;height:74px;border-radius:20px;display:grid;place-items:center;font-size:42px;background:linear-gradient(135deg,var(--ac),#ffffff55 190%);box-shadow:inset 0 2px 0 #fff7,0 6px 12px #0003;overflow:hidden}
+.ic img{width:100%;height:100%;object-fit:cover}
+.card h2{margin:0;font-size:20px}.card p{margin:0;opacity:.8;font-size:14px;line-height:1.4}
+.tg{display:flex;gap:6px;flex-wrap:wrap}.tg span{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:#0001}
+.bt{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.b{flex:1;text-align:center;text-decoration:none;border:0;border-radius:12px;padding:10px 12px;font-weight:800;font-size:14px;background:#0001;color:var(--tx);cursor:pointer;box-shadow:0 3px 0 #0002}
+.b.pr{background:var(--ac);color:#fff}.b.off{opacity:.45;pointer-events:none}
+.b:active{transform:translateY(2px);box-shadow:none}
+#none{text-align:center;opacity:.7;padding:30px}
+footer{text-align:center;padding:10px 16px 34px;opacity:.8;font-size:14px}footer a{color:var(--ac);font-weight:700;margin:0 8px}
+#pl{position:fixed;inset:0;background:#000;display:none;flex-direction:column;z-index:9}
+#pl .bar{display:flex;gap:8px;align-items:center;padding:8px 10px;background:#111;color:#fff;padding-top:max(8px,env(safe-area-inset-top))}
+#pl .bar b{flex:1;font-size:15px}
+#pl .bar button{border:0;border-radius:10px;background:#333;color:#fff;font-size:18px;padding:6px 12px}
+#fr{flex:1;border:0;width:100%;background:#fff}
+</style></head><body>
+<header><div id="logo"></div><h1 id="t"></h1><p id="sub"></p><input id="q" type="search" placeholder="🔎 Найти игру…"><div id="tags"></div></header>
+<main id="grid"></main><div id="none" hidden>Ничего не найдено 🤷</div>
+<footer id="ft"></footer>
+<div id="pl"><div class="bar"><b id="pt"></b><button id="sh" title="Скопировать ссылку">🔗</button><button id="fs" title="На весь экран">⛶</button><button id="cl">✕</button></div><iframe id="fr" allow="fullscreen; autoplay"></iframe></div>
+<script>
+/* ============================================================
+   ✏️ НАСТРОЙКИ САЙТА — меняй всё прямо здесь
+   ============================================================ */
+const SITE={
+  title:"Мои игры",                 // название сайта
+  logo:"🎮",                        // эмодзи-логотип (или оставь пустым "")
+  tagline:"Играй прямо в браузере или скачивай!",
+  footer:"Сделано с ❤️",            // текст внизу
+  links:[                           // ссылки внизу (можно удалить все)
+    // {t:"Telegram",u:"https://t.me/твой_ник"},
+  ],
+  theme:{
+    accent:"#e8643c",               // главный цвет кнопок
+    bg1:"#fdf3e3", bg2:"#ffd9b0",   // градиент фона
+    text:"#3b2a1a", card:"#ffffff", // цвет текста и карточек
+    radius:18,                      // скругление карточек, px
+    font:"system",                  // system | serif | mono | round
+    dark:"auto"                     // "auto" | true | false (тёмная тема)
+  }
+};
+/* ============================================================
+   🎮 СПИСОК ИГР — чтобы добавить игру, скопируй блок {...} и измени
+   play: файл игры (для кнопки «Играть»), html: файл для скачивания,
+   apk: файл APK (если нет — оставь ""), img: картинка-иконка (необязательно),
+   soon:true — показать «Скоро» вместо кнопок
+   ============================================================ */
+const GAMES=[
+  {id:"coffee",title:"Моя кофейня",icon:"☕",img:"",
+   desc:"Готовь латте и капучино, обслуживай гостей и монстров, переживи ночную смену и купи питомца для дома.",
+   tags:["Симулятор","Спокойная"],play:"games/coffee.html",html:"games/coffee.html",apk:"",soon:false},
+  {id:"repair",title:"Мой сервис",icon:"🔧",img:"",
+   desc:"Чини айфоны на верстаке: откручивай винты, меняй детали и зарабатывай. Ночью — ремонт для монстров.",
+   tags:["Симулятор","Ремонт"],play:"games/repair.html",html:"games/repair.html",apk:"",soon:false},
+  {id:"shop",title:"Мой магазинчик",icon:"🏪",img:"shop-icon.png",
+   desc:"Будь продавцом: обслуживай покупателей, лови воров, корми бездомных и сражайся с монстрами по ночам.",
+   tags:["Симулятор","Магазин"],play:"games/shop.html",html:"games/shop.html",apk:"",soon:false}
+];
+/* ===================== дальше можно не трогать ===================== */
+const T=SITE.theme,$=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const dk=T.dark==="auto"?matchMedia("(prefers-color-scheme: dark)").matches:!!T.dark;
+const C=dk?{bg1:"#17130f",bg2:"#2a2018",tx:"#f3e6d3",cd:"#2c241b"}:{bg1:T.bg1,bg2:T.bg2,tx:T.text,cd:T.card};
+const st=document.documentElement.style;
+st.setProperty("--ac",T.accent);st.setProperty("--bg1",C.bg1);st.setProperty("--bg2",C.bg2);st.setProperty("--tx",C.tx);st.setProperty("--cd",C.cd);st.setProperty("--r",T.radius+"px");
+st.setProperty("--ff",({serif:"Georgia,serif",mono:"ui-monospace,Menlo,monospace",round:'"Trebuchet MS",system-ui,sans-serif'})[T.font]||"system-ui,-apple-system,Segoe UI,sans-serif");
+document.title=SITE.title;$("logo").textContent=SITE.logo;$("t").textContent=SITE.title;$("sub").textContent=SITE.tagline;
+$("ft").innerHTML=esc(SITE.footer)+(SITE.links.length?"<br>":"")+SITE.links.map(l=>'<a href="'+esc(l.u)+'" target="_blank" rel="noopener">'+esc(l.t)+'</a>').join("");
+let tag="",qs="";
+const all=[...new Set(GAMES.flatMap(g=>g.tags||[]))];
+function chips(){$("tags").innerHTML=(all.length?['']:[]).concat(all).map(t=>'<button class="chip'+(t===tag?' on':'')+'" data-t="'+esc(t)+'">'+(t||'Все')+'</button>').join("")}
+function draw(){
+  const q=qs.toLowerCase(),L=GAMES.filter(g=>(!tag||(g.tags||[]).includes(tag))&&(g.title+" "+g.desc).toLowerCase().includes(q));
+  $("none").hidden=L.length>0;
+  $("grid").innerHTML=L.map(g=>{
+    const ic=g.img?'<img src="'+esc(g.img)+'" alt="">':esc(g.icon);
+    const bt=g.soon?'<span class="b off">Скоро ⏳</span>':
+      (g.play?'<button class="b pr" data-p="'+esc(g.id)+'">▶ Играть</button>':'')+
+      (g.html?'<a class="b" href="'+esc(g.html)+'" download>⬇ HTML</a>':'')+
+      (g.apk?'<a class="b" href="'+esc(g.apk)+'" download>⬇ APK</a>':'');
+    return '<article class="card"><div class="top"><div class="ic">'+ic+'</div><div><h2>'+esc(g.title)+'</h2><div class="tg">'+(g.tags||[]).map(t=>'<span>'+esc(t)+'</span>').join("")+'</div></div></div><p>'+esc(g.desc)+'</p><div class="bt">'+bt+'</div></article>'}).join("");
+}
+$("tags").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;tag=b.dataset.t;chips();draw()};
+$("q").oninput=e=>{qs=e.target.value;draw()};
+$("grid").onclick=e=>{const b=e.target.closest("[data-p]");if(b)openG(b.dataset.p)};
+let cur=null;
+function openG(id){const g=GAMES.find(x=>x.id===id);if(!g)return;cur=g;$("pt").textContent=g.title;$("fr").src=g.play;$("pl").style.display="flex";history.replaceState(null,"","?game="+encodeURIComponent(id))}
+function closeG(){$("pl").style.display="none";$("fr").src="about:blank";cur=null;history.replaceState(null,"",location.pathname)}
+$("cl").onclick=closeG;
+$("fs").onclick=()=>{const f=$("fr");(f.requestFullscreen||f.webkitRequestFullscreen||function(){}).call(f)};
+$("sh").onclick=()=>{const u=location.origin+location.pathname+"?game="+encodeURIComponent(cur.id);(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>alert("Ссылка скопирована!"),()=>prompt("Скопируй ссылку:",u))};
+chips();draw();
+const gp=new URLSearchParams(location.search).get("game");if(gp)openG(gp);
+</script></body></html>
